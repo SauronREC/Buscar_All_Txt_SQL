@@ -1,0 +1,41 @@
+CREATE PROCEDURE `BuscarTxt`()
+BEGIN
+	DECLARE tabla varchar(256) COLLATE utf8_unicode_ci;
+	DECLARE columna varchar(128) COLLATE utf8_unicode_ci;
+	DECLARE cadenaBuscar varchar(110) COLLATE utf8_unicode_ci;
+	DECLARE consulta varchar(200) COLLATE utf8_unicode_ci;
+	DECLARE cons varchar(400) COLLATE utf8_unicode_ci;
+	DECLARE hecho1 INTEGER DEFAULT 0;
+	DECLARE hecho2 INTEGER DEFAULT 0;
+	DECLARE contador INTEGER DEFAULT 0;
+	
+		#Declaro el cursor de los campos x tabla
+		DECLARE cursor_campo CURSOR FOR SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = Database() AND DATA_TYPE='varchar';
+		DECLARE CONTINUE HANDLER FOR NOT FOUND SET hecho2=1;
+	
+	SET tabla = '';
+	SET cadenaBuscar = QUOTENAME('%https://forms.office.com%','''');
+	SET cons='';
+	
+	DROP TABLE resultados;
+	CREATE TABLE resultados (columna varchar(100), valor varchar(400));
+	
+		OPEN cursor_campo;
+		loop1: LOOP
+		FETCH cursor_campo INTO tabla,columna;	
+		
+		IF hecho2=1 THEN
+			LEAVE loop1;
+		END IF;
+		
+		IF columna IS NOT NULL THEN
+				SET contador = contador + 1;
+				SET cons = CONCAT('INSERT INTO resultados(columna,valor) (','SELECT ',"'",columna,"','",tabla,"'",' FROM ',tabla,' WHERE ',columna,' LIKE ',cadenaBuscar,')');
+				PREPARE consulta FROM cons;
+				EXECUTE consulta;
+		END IF;
+	END LOOP loop1;
+	SELECT contador;
+	SELECT columna, valor FROM resultados;
+	
+END
